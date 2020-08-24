@@ -76,11 +76,15 @@ module Htmltoword
             end
           end
           unless @image_files.empty?
-          #stream the image files into the media folder using open-uri
+            # stream the image files into the media folder using open-uri unless data is available
             @image_files.each do |hash|
               out.put_next_entry("word/media/#{hash[:filename]}")
-              URI.open(hash[:url], 'rb') do |f|
-                out.write(f.read)
+              if hash[:base64]
+                out.write(Base64.decode64(hash[:base64]))
+              else
+                URI.open(hash[:url], 'rb') do |f|
+                  out.write(f.read)
+                end
               end
             end
           end
@@ -121,7 +125,7 @@ module Htmltoword
         filename = image['data-filename'] ? image['data-filename'] : image['src'].split("/").last
         ext = File.extname(filename).delete(".").downcase
 
-        @image_files << { filename: "image#{i+1}.#{ext}", url: image['src'], ext: ext }
+        @image_files << { filename: "image#{i+1}.#{ext}", url: image['src'], ext: ext, base64: image['data-base64'] }
       end
     end
 
